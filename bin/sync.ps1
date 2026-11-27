@@ -34,7 +34,13 @@ function sshPath($path){
     return (Get-Item -LiteralPath $path -ErrorAction Stop).FullName.Replace('\','/')
 }
 $env:NOTE_SYNC_KEY=sshPath (setting 'sshKeyPath' 'ssh/id_ed25519')
-$env:NOTE_SYNC_HOSTS=sshPath (setting 'knownHostsPath' 'ssh/gitee_known_hosts')
+$hostsPath=$config.knownHostsPath
+if($null -eq $hostsPath -or ($hostsPath -is [string] -and $hostsPath.Length -eq 0)){
+    $hostsPath=Join-Path $HOME '.ssh/known_hosts'
+}elseif($hostsPath -isnot [string] -or [string]::IsNullOrWhiteSpace($hostsPath)){
+    throw 'Invalid setting: knownHostsPath'
+}
+$env:NOTE_SYNC_HOSTS=sshPath $hostsPath
 $env:GIT_TERMINAL_PROMPT='0'
 $env:GIT_SSH_COMMAND='ssh -o ConnectTimeout=12 -o ServerAliveInterval=10 -o ServerAliveCountMax=2 -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=\"$NOTE_SYNC_HOSTS\"" -i "$NOTE_SYNC_KEY"'
 $slug=setting 'giteeRepository' 'hippo-yf/my-sticky-notes-cache'

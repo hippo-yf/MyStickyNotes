@@ -10,7 +10,7 @@ MyStickyNotes 是一个原生 C++ Windows 桌面便笺。支持中英文字体�
 
 notes.json 中的 appVersion 表示写入文件的应用版本，与 EXE 产品版本一致。cache-fmt-version 表示 JSON 格式版本，当前为 4。saveDelaySeconds 控制最后一次修改到本地保存的间隔，默认 5 秒。syncDelayMinutes 控制自动同步的间隔，默认 10 分钟。
 
-使用 Gitee 同步时，安装 Git 和 SSH，将 [sync.ps1](bin/sync.ps1) 放在程序旁，并在同级 ssh 目录准备有仓库访问权限的 id_ed25519 和包含已核实服务器主机密钥的 gitee_known_hosts。脚本默认连接 hippo-yf/my-sticky-notes-cache；使用自己的仓库时，在 notes.json 中设置 giteeRepository（所有者/仓库名）。sshKeyPath 和 knownHostsPath 可填写绝对路径或相对于程序目录的路径。各设备共用远端的 notes.json。两端同时修改时，程序保留本地便笺，并将远端副本保存为 notes.remote.json。
+使用 Gitee 同步时，安装 Git 和 SSH，将 [sync.ps1](bin/sync.ps1) 放在程序旁，并在同级 ssh 目录准备有仓库访问权限的 id_ed25519 和包含已核实服务器主机密钥的 gitee_known_hosts。脚本默认连接 hippo-yf/my-sticky-notes-cache；使用自己的仓库时，在 notes.json 中设置 giteeRepository（所有者/仓库名）。sshKeyPath 和 knownHostsPath 可填写绝对路径或相对于程序目录的路径。省略 knownHostsPath 或设为 "" 时使用当前用户的 ~/.ssh/known_hosts。各设备共用远端的 notes.json。两端同时修改时，程序保留本地便笺，并将远端副本保存为 notes.remote.json。
 
 ## 从源码构建
 

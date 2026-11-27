@@ -81,7 +81,7 @@ constexpr UINT defaultSaveDelaySeconds=5;
 UINT saveDelaySeconds=defaultSaveDelaySeconds;
 constexpr UINT defaultSyncDelayMinutes=10;
 UINT syncDelayMinutes=defaultSyncDelayMinutes;
-wstring sshKeyPath=L"ssh/id_ed25519",knownHostsPath=L"ssh/gitee_known_hosts",giteeRepository=L"hippo-yf/my-sticky-notes-cache";
+wstring sshKeyPath=L"ssh/id_ed25519",knownHostsPath=L"",giteeRepository=L"hippo-yf/my-sticky-notes-cache";
 bool migrateLegacy=false;
 wstring editorText(){
     wstring text(GetWindowTextLength(edit)+1,L'\0');
@@ -161,7 +161,7 @@ bool save()try{
   "_说明": {
     "_说明": "字段说明，可随备份一起保留。",
     "sshKeyPath": "SSH 私钥路径，相对路径以程序目录为基准。",
-    "knownHostsPath": "SSH 主机密钥文件路径，相对路径以程序目录为基准。",
+    "knownHostsPath": "SSH 主机密钥文件路径。省略或填空字符串时，使用当前用户的 ~/.ssh/known_hosts（通常为 C:/Users/你的用户名/.ssh/known_hosts）；显式相对路径以程序目录为基准。",
     "giteeRepository": "Gitee 同步仓库，格式为 所有者/仓库名。",
     "cache-fmt-version": "文件格式版本。",
     "appVersion": "写入此文件的应用版本。",
@@ -205,7 +205,7 @@ bool load()try{
         double delay=json.GetNamedNumber(L"saveDelaySeconds",(double)defaultSaveDelaySeconds);
         if(!std::isfinite(delay) || delay<1 || delay>USER_TIMER_MAXIMUM/1000 || delay!=std::floor(delay))delay=defaultSaveDelaySeconds;
         sshKeyPath=json.GetNamedString(L"sshKeyPath",L"ssh/id_ed25519");
-        knownHostsPath=json.GetNamedString(L"knownHostsPath",L"ssh/gitee_known_hosts");
+        knownHostsPath=json.GetNamedString(L"knownHostsPath",L"");
         giteeRepository=json.GetNamedString(L"giteeRepository",L"hippo-yf/my-sticky-notes-cache");
         auto brightness=json.GetNamedNumber(L"barBrightness");
         if(brightness<0||brightness>100)return false;
