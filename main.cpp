@@ -148,6 +148,7 @@ bool save()try{
   "_说明": {
     "_说明": "字段说明，可随备份一起保留。",
     "version": "文件格式版本。",
+    "appVersion": "写入此文件的应用版本。",
     "saveDelaySeconds": "最后一次修改到本地自动保存的秒数，正整数，默认 5 秒。",
     "syncDelayMinutes": "最后一次修改到 Gitee 自动同步的分钟数，正整数，默认 10 分钟。",
     "richText": "原始 RTF 字节的十六进制编码，用于还原字体、字号、行距、列表等排版。",
@@ -161,6 +162,7 @@ bool save()try{
     "palette": "颜色选择器的 16 个自定义色位，按顺序排列。"
   },
   "version": 4,
+  "appVersion": "1.0",
   "saveDelaySeconds": )"<<saveDelaySeconds<<",\n  \"syncDelayMinutes\": "<<syncDelayMinutes<<",\n  \"richText\": "<<'"';
     writeHex(out,r);out<<'"';
     out<<",\n  \"chineseFont\": "<<jsonQuote(languageFaces[1])<<",\n  \"englishFont\": "<<jsonQuote(languageFaces[0]);
