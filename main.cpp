@@ -81,6 +81,7 @@ constexpr UINT defaultSaveDelaySeconds=5;
 UINT saveDelaySeconds=defaultSaveDelaySeconds;
 constexpr UINT defaultSyncDelayMinutes=10;
 UINT syncDelayMinutes=defaultSyncDelayMinutes;
+wstring sshKeyPath=L"ssh/id_ed25519",knownHostsPath=L"ssh/gitee_known_hosts",giteeRepository=L"hippo-yf/my-sticky-notes-cache";
 bool migrateLegacy=false;
 wstring editorText(){
     wstring text(GetWindowTextLength(edit)+1,L'\0');
@@ -150,6 +151,7 @@ bool save()try{
   "cache-fmt-version": 4,
   "saveDelaySeconds": )"<<saveDelaySeconds<<",\n  \"syncDelayMinutes\": "<<syncDelayMinutes<<",\n  \"richText\": "<<'"';
     writeHex(out,r);out<<'"';
+    out<<",\n  \"sshKeyPath\": "<<jsonQuote(sshKeyPath)<<",\n  \"knownHostsPath\": "<<jsonQuote(knownHostsPath)<<",\n  \"giteeRepository\": "<<jsonQuote(giteeRepository);
     out<<",\n  \"chineseFont\": "<<jsonQuote(languageFaces[1])<<",\n  \"englishFont\": "<<jsonQuote(languageFaces[0]);
     out<<",\n  \"background\": \""<<colorText(background)<<"\",\n  \"barBrightness\": "<<barBrightness
        <<",\n  \"barColor\": \""<<colorText(barColor())<<"\",\n  \"scrollTrack\": \""<<colorText(trackColor)
@@ -158,6 +160,9 @@ bool save()try{
     out<<u8R"(],
   "_说明": {
     "_说明": "字段说明，可随备份一起保留。",
+    "sshKeyPath": "SSH 私钥路径，相对路径以程序目录为基准。",
+    "knownHostsPath": "SSH 主机密钥文件路径，相对路径以程序目录为基准。",
+    "giteeRepository": "Gitee 同步仓库，格式为 所有者/仓库名。",
     "cache-fmt-version": "文件格式版本。",
     "appVersion": "写入此文件的应用版本。",
     "saveDelaySeconds": "最后一次修改到本地自动保存的秒数，正整数，默认 5 秒。",
@@ -199,6 +204,9 @@ bool load()try{
         if(!std::isfinite(minutes) || minutes<1 || minutes>USER_TIMER_MAXIMUM/60000 || minutes!=std::floor(minutes))minutes=defaultSyncDelayMinutes;
         double delay=json.GetNamedNumber(L"saveDelaySeconds",(double)defaultSaveDelaySeconds);
         if(!std::isfinite(delay) || delay<1 || delay>USER_TIMER_MAXIMUM/1000 || delay!=std::floor(delay))delay=defaultSaveDelaySeconds;
+        sshKeyPath=json.GetNamedString(L"sshKeyPath",L"ssh/id_ed25519");
+        knownHostsPath=json.GetNamedString(L"knownHostsPath",L"ssh/gitee_known_hosts");
+        giteeRepository=json.GetNamedString(L"giteeRepository",L"hippo-yf/my-sticky-notes-cache");
         auto brightness=json.GetNamedNumber(L"barBrightness");
         if(brightness<0||brightness>100)return false;
         bool hasStyles=version<4 && json.HasKey(L"defaultStyle") && json.HasKey(L"textStyles");
@@ -220,7 +228,7 @@ bool load()try{
         languageFaces[0]=json.GetNamedString(L"englishFont",L"");
         languageFaces[1]=json.GetNamedString(L"chineseFont",L"");
         background=bg;trackColor=track;thumbColor=thumb;barBrightness=(int)brightness;
-        copy_n(swatches,16,colors);portableColors=true;saveDelaySeconds=(UINT)delay;syncDelayMinutes=(UINT)minutes;migrateLegacy=!json.HasKey(L"cache-fmt-version") || version<4 || !json.HasKey(L"saveDelaySeconds") || !json.HasKey(L"syncDelayMinutes");return true;
+        copy_n(swatches,16,colors);portableColors=true;saveDelaySeconds=(UINT)delay;syncDelayMinutes=(UINT)minutes;migrateLegacy=!json.HasKey(L"sshKeyPath") || !json.HasKey(L"knownHostsPath") || !json.HasKey(L"giteeRepository") || !json.HasKey(L"cache-fmt-version") || version<4 || !json.HasKey(L"saveDelaySeconds") || !json.HasKey(L"syncDelayMinutes");return true;
     }
     if(version!=1)return false;
     migrateLegacy=true;auto a=x.find("\"rtfHex\":\"");if(a==x.npos)return false;a+=10;auto b=x.find('"',a);if(b==x.npos||(b-a)%2)return false;Reader r;string digits="0123456789abcdef";while(a<b){auto i=digits.find(x[a++]),j=digits.find(x[a++]);if(i>15||j>15)return false;r.data+=(char)(i*16+j);}if(r.data.rfind("{\\rtf",0)!=0)return false;dark=x.find("\"dark\":true")!=x.npos; background=dark?RGB(201,196,219):RGB(255,247,213); auto key=x.find("\"background\":"); if(key!=x.npos){char* end; auto value=strtoul(x.c_str()+key+13,&end,10); if(*end==',' && value<=0xffffff)background=value;} readColors(x); EDITSTREAM s{(DWORD_PTR)&r,0,streamIn};SendMessage(edit,EM_STREAMIN,SF_RTF,(LPARAM)&s);return !s.dwError;}catch(...){return false;}

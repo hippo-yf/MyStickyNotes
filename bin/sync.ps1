@@ -22,11 +22,31 @@ function hashfile($p){if(Test-Path $p){(Get-FileHash $p).Hash}else{''}}
 try {
 $log=Get-Item "$root/sync.log" -ErrorAction SilentlyContinue
 if($log -and $log.Length -gt 1MB){[IO.File]::Copy($log.FullName,"$root/sync.previous.log",$true);[IO.File]::WriteAllText($log.FullName,"")}
-$key=(Resolve-Path "$root/ssh/id_ed25519").Path.Replace('\','/')
-$hosts=(Resolve-Path "$root/ssh/gitee_known_hosts").Path.Replace('\','/')
-$env:GIT_TERMINAL_PROMPT="0"
-$env:GIT_SSH_COMMAND="ssh -o ConnectTimeout=12 -o ServerAliveInterval=10 -o ServerAliveCountMax=2 -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=`"$hosts`" -i `"$key`""
-$url='git@gitee.com:hippo-yf/my-sticky-notes-cache.git'
+$config=if(Test-Path "$root/notes.json"){Get-Content "$root/notes.json" -Raw -Encoding UTF8 | ConvertFrom-Json}
+function setting($name,$default){
+    if($null -eq $config -or $null -eq $config.PSObject.Properties[$name]){return $default}
+    $value=$config.$name
+    if($value -isnot [string] -or [string]::IsNullOrWhiteSpace($value)){throw "Invalid setting: $name"}
+    return $value
+}
+function sshPath($path){
+    if(![IO.Path]::IsPathRooted($path)){$path=Join-Path $root $path}
+    return (Get-Item -LiteralPath $path -ErrorAction Stop).FullName.Replace('\','/')
+}
+$env:NOTE_SYNC_KEY=sshPath (setting 'sshKeyPath' 'ssh/id_ed25519')
+$env:NOTE_SYNC_HOSTS=sshPath (setting 'knownHostsPath' 'ssh/gitee_known_hosts')
+$env:GIT_TERMINAL_PROMPT='0'
+$env:GIT_SSH_COMMAND='ssh -o ConnectTimeout=12 -o ServerAliveInterval=10 -o ServerAliveCountMax=2 -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=\"$NOTE_SYNC_HOSTS\"" -i "$NOTE_SYNC_KEY"'
+$slug=setting 'giteeRepository' 'hippo-yf/my-sticky-notes-cache'
+if($slug -notmatch '^[a-zA-Z0-9_-][a-zA-Z0-9._-]*/[a-zA-Z0-9_-][a-zA-Z0-9._-]*$'){throw 'Invalid giteeRepository: expected owner/repository'}
+$url="git@gitee.com:$slug.git"
+$state="$root/.last-sync"
+if($slug -cne 'hippo-yf/my-sticky-notes-cache'){
+    $sha=[Security.Cryptography.SHA256]::Create()
+    try{$id=[BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($slug))).Replace('-','').Substring(0,20)}finally{$sha.Dispose()}
+    $repo="$root/.sync-repo-$id"
+    $state="$root/.last-sync-$id"
+}
 if(!(Test-Path "$repo/.git")){
     gitok clone --quiet $url $repo
 }
@@ -60,7 +80,8 @@ if($branch){
     $branch=(gitok symbolic-ref --short HEAD).Trim()
 } 
 $local="$root/notes.json"
-$old=if(Test-Path "$root/.last-sync"){([string](Get-Content "$root/.last-sync" -Raw)).Trim()}else{''}
+if((gitok config --get remote.origin.url) -cne $url){throw 'Sync cache origin does not match giteeRepository'}
+$old=if(Test-Path $state){([string](Get-Content $state -Raw)).Trim()}else{''}
 $downloaded=$false
 $a=hashfile $local
 $b=hashfile 'notes.json'
@@ -91,13 +112,13 @@ if($a -and $a -ne $old -and $a -ne $b){
     $head=gitok rev-parse HEAD
     if(!($refs -match "^$head\s+HEAD$")){gitok push --quiet origin "HEAD:refs/heads/$branch"}
 }
-$state="$root/.last-sync"
 Set-Content "$state.tmp" (hashfile $local)
 if(Test-Path $state){[IO.File]::Replace("$state.tmp",$state,"$state.bak")}
 else{[IO.File]::Move("$state.tmp",$state)}
 if($downloaded){exit 10}
 exit 0 
 }catch{Add-Content "$root/sync.log" ("[{0:yyyy-MM-dd HH:mm:ss}] ERROR {1}" -f (Get-Date),$_.Exception.Message);exit 1}
+
 
 
 
