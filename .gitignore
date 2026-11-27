@@ -1,0 +1,17 @@
+/ssh/
+/.sync-repo/
+/.last-sync*
+/.sync-pending
+/notes.json*
+/notes.remote.json
+/notes-v*.bak
+/window.settings
+/window.tmp
+/sync*.log
+*.obj
+*.res
+*.exe
+*.7z
+/bin/*
+!/bin/sync.ps1
+!/bin/StickyNotes.exe
