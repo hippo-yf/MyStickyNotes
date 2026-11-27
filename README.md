@@ -4,7 +4,7 @@ MyStickyNotes 是一个原生 C++ Windows 桌面便笺。支持中英文字体�
 
 ## 下载与运行
 
-从 [GitHub Releases](https://github.com/hippo-yf/MyStickyNotes/releases) 下载 Win64 版 StickyNotes.exe，放在当前用户可写的目录中运行。首次编辑后，程序会在同一目录创建 notes.json。备份此文件即可保留正文、排版与主题设置。
+克隆仓库后运行 [bin/StickyNotes.exe](bin/StickyNotes.exe)（Windows x64）。更新时先退出程序，再运行 `git pull`，即可一起取得对应的源码、EXE 和同步脚本。首次编辑后，程序会在同一目录创建 notes.json。备份此文件即可保留正文、排版与主题设置。
 
 ## 保存与同步
 

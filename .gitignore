@@ -14,4 +14,4 @@
 *.7z
 /bin/*
 !/bin/sync.ps1
-/bin/StickyNotes.exe
+!/bin/StickyNotes.exe
