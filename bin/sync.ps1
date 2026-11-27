@@ -1,8 +1,10 @@
 ﻿$ErrorActionPreference='Stop'
 $root=$PSScriptRoot
+$repo=Join-Path $root '.sync-repo'
+$repoArgs=@()
 function gitok {
     $ErrorActionPreference='Continue'
-    $output=& git @args 2>&1
+    $output=& git @repoArgs @args 2>&1
     $code=$LASTEXITCODE
     $lines=@($output | ForEach-Object { "$_" -replace '\x1b\[[0-9;]*m','' })
     foreach($line in $lines){
@@ -24,13 +26,14 @@ $key=(Resolve-Path "$root/ssh/id_ed25519").Path.Replace('\','/')
 $hosts=(Resolve-Path "$root/ssh/gitee_known_hosts").Path.Replace('\','/')
 $env:GIT_TERMINAL_PROMPT="0"
 $env:GIT_SSH_COMMAND="ssh -o ConnectTimeout=12 -o ServerAliveInterval=10 -o ServerAliveCountMax=2 -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=`"$hosts`" -i `"$key`""
-$repo=Join-Path $root '.sync-repo'
 $url='git@gitee.com:hippo-yf/my-sticky-notes-cache.git'
 if(!(Test-Path "$repo/.git")){
     gitok clone --quiet $url $repo
 }
-Set-Location $repo
-gitok config --local core.autocrlf false
+Set-Location -LiteralPath $repo
+$gitPath=(Get-Item -LiteralPath $repo).FullName.Replace('\','/')
+$repoArgs=@('-c',"safe.directory=$gitPath",'-c','core.autocrlf=false','-C',$repo,"--git-dir=$repo/.git","--work-tree=$repo")
+if((gitok rev-parse --is-inside-work-tree) -ne 'true'){throw "Invalid sync working tree: $repo"}
 $refs=gitok ls-remote --symref origin HEAD
 $branch=$null
 foreach($ref in $refs){
@@ -45,9 +48,9 @@ if($branch){
         $head=gitok rev-parse HEAD
         gitok fetch origin $branch
         $remoteHead=gitok rev-parse FETCH_HEAD
-        & git merge-base --is-ancestor $head $remoteHead
+        & git @repoArgs merge-base --is-ancestor $head $remoteHead
         if($LASTEXITCODE -ne 1){throw $pullError}
-        & git merge-base --is-ancestor $remoteHead $head
+        & git @repoArgs merge-base --is-ancestor $remoteHead $head
         if($LASTEXITCODE -ne 1){throw $pullError}
         if(gitok status --porcelain){throw $pullError}
         gitok branch "saved-sync-$([guid]::NewGuid().ToString('N'))" $head
@@ -95,6 +98,7 @@ else{[IO.File]::Move("$state.tmp",$state)}
 if($downloaded){exit 10}
 exit 0 
 }catch{Add-Content "$root/sync.log" ("[{0:yyyy-MM-dd HH:mm:ss}] ERROR {1}" -f (Get-Date),$_.Exception.Message);exit 1}
+
 
 
 
