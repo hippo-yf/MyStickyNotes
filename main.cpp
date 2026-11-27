@@ -148,6 +148,14 @@ bool save()try{
     out<<u8R"({
   "appVersion": ")" NOTE_VERSION R"(",
   "cache-fmt-version": 4,
+  "saveDelaySeconds": )"<<saveDelaySeconds<<",\n  \"syncDelayMinutes\": "<<syncDelayMinutes<<",\n  \"richText\": "<<'"';
+    writeHex(out,r);out<<'"';
+    out<<",\n  \"chineseFont\": "<<jsonQuote(languageFaces[1])<<",\n  \"englishFont\": "<<jsonQuote(languageFaces[0]);
+    out<<",\n  \"background\": \""<<colorText(background)<<"\",\n  \"barBrightness\": "<<barBrightness
+       <<",\n  \"barColor\": \""<<colorText(barColor())<<"\",\n  \"scrollTrack\": \""<<colorText(trackColor)
+       <<"\",\n  \"scrollThumb\": \""<<colorText(thumbColor)<<"\",\n  \"palette\": [";
+    for(int i=0;i<16;i++)out<<(i?", ":"")<<'"'<<colorText(colors[i])<<'"';
+    out<<u8R"(],
   "_说明": {
     "_说明": "字段说明，可随备份一起保留。",
     "cache-fmt-version": "文件格式版本。",
@@ -163,15 +171,9 @@ bool save()try{
     "scrollTrack": "滚动条轨道颜色。",
     "scrollThumb": "滚动条滑块颜色。",
     "palette": "颜色选择器的 16 个自定义色位，按顺序排列。"
-  },
-  "saveDelaySeconds": )"<<saveDelaySeconds<<",\n  \"syncDelayMinutes\": "<<syncDelayMinutes<<",\n  \"richText\": "<<'"';
-    writeHex(out,r);out<<'"';
-    out<<",\n  \"chineseFont\": "<<jsonQuote(languageFaces[1])<<",\n  \"englishFont\": "<<jsonQuote(languageFaces[0]);
-    out<<",\n  \"background\": \""<<colorText(background)<<"\",\n  \"barBrightness\": "<<barBrightness
-       <<",\n  \"barColor\": \""<<colorText(barColor())<<"\",\n  \"scrollTrack\": \""<<colorText(trackColor)
-       <<"\",\n  \"scrollThumb\": \""<<colorText(thumbColor)<<"\",\n  \"palette\": [";
-    for(int i=0;i<16;i++)out<<(i?", ":"")<<'"'<<colorText(colors[i])<<'"';
-    out<<"]\n}\n";out.close();
+  }
+}
+)";out.close();
     if(!out||!MoveFileEx(tmp.c_str(),file.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH))return false;
     dirty=false;migrateLegacy=false;return true;
 }catch(...){return false;}
