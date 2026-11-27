@@ -1,4 +1,5 @@
-﻿#define UNICODE
+#include "version.h"
+#define UNICODE
 #define _UNICODE
 #include <windows.h>
 #include <imm.h>
@@ -162,7 +163,7 @@ bool save()try{
     "palette": "颜色选择器的 16 个自定义色位，按顺序排列。"
   },
   "version": 4,
-  "appVersion": "1.0.1",
+  "appVersion": ")" NOTE_VERSION R"(",
   "saveDelaySeconds": )"<<saveDelaySeconds<<",\n  \"syncDelayMinutes\": "<<syncDelayMinutes<<",\n  \"richText\": "<<'"';
     writeHex(out,r);out<<'"';
     out<<",\n  \"chineseFont\": "<<jsonQuote(languageFaces[1])<<",\n  \"englishFont\": "<<jsonQuote(languageFaces[0]);
